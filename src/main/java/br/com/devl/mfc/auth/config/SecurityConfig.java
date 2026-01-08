@@ -1,5 +1,6 @@
 package br.com.devl.mfc.auth.config;
 
+import br.com.devl.mfc.auth.exception.SecurityExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,9 +16,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
 	private final JwtFilter jwtFilter;
+    private final SecurityExceptionHandler securityExceptionHandler;
 	
-	public SecurityConfig(JwtFilter jwtFilter) {
+	public SecurityConfig(JwtFilter jwtFilter, SecurityExceptionHandler securityExceptionHandler) {
 		this.jwtFilter = jwtFilter;
+		this.securityExceptionHandler = securityExceptionHandler;
 	}
 
     @Bean
@@ -27,6 +30,9 @@ public class SecurityConfig {
 			.csrf(csrf -> csrf.disable())
 			.sessionManagement(
 					session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+			)
+			.exceptionHandling(ex -> ex
+					.authenticationEntryPoint(securityExceptionHandler)
 			)
 			.authorizeHttpRequests(auth -> auth
 					.requestMatchers("/auth/*").permitAll()
@@ -42,6 +48,5 @@ public class SecurityConfig {
     PasswordEncoder passwordEncoder() {
     	return new BCryptPasswordEncoder();
     }
-	
 	
 }
