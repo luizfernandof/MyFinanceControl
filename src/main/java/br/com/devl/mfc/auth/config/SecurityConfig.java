@@ -1,6 +1,5 @@
 package br.com.devl.mfc.auth.config;
 
-import br.com.devl.mfc.auth.exception.SecurityExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,6 +9,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import br.com.devl.mfc.auth.exception.SecurityExceptionHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -35,8 +36,12 @@ public class SecurityConfig {
 					.authenticationEntryPoint(securityExceptionHandler)
 			)
 			.authorizeHttpRequests(auth -> auth
-					.requestMatchers("/auth/*").permitAll()
+					.requestMatchers("/auth/**", "/h2-console/**").permitAll()
 					.anyRequest().authenticated()
+			)
+			//RENDER H2 ON BROWSER(NO BLOCKS)
+			.headers(headers -> 
+				headers.frameOptions(frame -> frame.disable())
 			)
 			.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 		
