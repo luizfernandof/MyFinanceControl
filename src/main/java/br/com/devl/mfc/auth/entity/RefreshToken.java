@@ -7,21 +7,27 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "invalid_tokens")
-public class InvalidToken {
-	
+@Table(name = "refresh_tokens")
+public class RefreshToken {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
-	@Column(length = 500, nullable = false, unique = true)
+
+	@Column(nullable = false, unique = true)
 	private String token;
-	
+
 	@Column(nullable = false)
-	private Instant expiration;
+	private Instant expiryDate;
+
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "user_id")
+	private User user;
 
 	public Long getId() {
 		return id;
@@ -39,12 +45,19 @@ public class InvalidToken {
 		this.token = token;
 	}
 
-	public Instant getExpiration() {
-		return expiration;
+	public Instant getExpiryDate() {
+		return expiryDate;
 	}
 
-	public void setExpiration(Instant expiration) {
-		this.expiration = expiration;
+	public void setExpiryDate(Instant expiryDate) {
+		this.expiryDate = expiryDate;
 	}
 
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
 }

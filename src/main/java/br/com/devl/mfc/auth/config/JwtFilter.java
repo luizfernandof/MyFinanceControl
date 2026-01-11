@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import br.com.devl.mfc.auth.entity.User;
-import br.com.devl.mfc.auth.repository.InvalidTokenRepository;
 import br.com.devl.mfc.auth.repository.UserRepository;
 import br.com.devl.mfc.auth.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -22,13 +21,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
 	private final JwtService jwtService;
 	private final UserRepository userRepository;
-	private final InvalidTokenRepository invalidTokenRepository;
 
-	public JwtFilter(JwtService jwtService, UserRepository userRepository,
-			InvalidTokenRepository invalidTokenRepository) {
+	public JwtFilter(JwtService jwtService, UserRepository userRepository) {
 		this.jwtService = jwtService;
 		this.userRepository = userRepository;
-		this.invalidTokenRepository = invalidTokenRepository;
+	}
+
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		String path = request.getRequestURI();
+		return path.startsWith("/auth/") || path.startsWith("/h2-console");
 	}
 
 	@Override
@@ -38,24 +40,12 @@ public class JwtFilter extends OncePerRequestFilter {
 		String authHeader = request.getHeader("Authorization");
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-			String token = authHeader.substring(7);
 
-			// LOGOUT PARA INVALIDAR TOKEN
-			if (invalidTokenRepository.existsByToken(token)) {
-				SecurityContextHolder.clearContext();
-				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				response.setContentType("application/json");
-				response.getWriter().write("""
-						    {
-						      "error": "Token inválido",
-						      "message": "Este token foi invalidado (logout)"
-						    }
-						""");
-				return;
-			}
+			String token = authHeader.substring(7);
 
 			String email = jwtService.getEmail(token);
 			User user = userRepository.findByEmail(email).orElse(null);
+
 			if (user != null) {
 				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
 						List.of());
