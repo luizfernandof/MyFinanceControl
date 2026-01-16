@@ -1,0 +1,93 @@
+package br.com.devl.mfc.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import br.com.devl.mfc.auth.entity.User;
+import br.com.devl.mfc.dto.TransactionRequestDTO;
+import br.com.devl.mfc.dto.TransactionResponseDTO;
+import br.com.devl.mfc.entity.Category;
+import br.com.devl.mfc.entity.Transaction;
+import br.com.devl.mfc.repository.CategoryRepository;
+import br.com.devl.mfc.repository.TransactionRepository;
+
+@Service
+public class TransactionService {
+
+	private final TransactionRepository transactionRepository;
+	private final CategoryRepository categoryRepository;
+	
+	public TransactionService(TransactionRepository transactionRepository, CategoryRepository categoryRepository) {
+		this.transactionRepository = transactionRepository;
+		this.categoryRepository = categoryRepository;
+	}
+	
+	public TransactionResponseDTO create(TransactionRequestDTO dto, User user) {
+		
+		Category category = categoryRepository.findByIdAndUser(dto.categoryId(), user)
+				.orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+		
+		Transaction transaction = new Transaction();
+		transaction.setDescription(dto.description());
+		transaction.setAmount(dto.amount());
+		transaction.setDate(dto.date());
+		transaction.setType(dto.type());
+		transaction.setCategory(category);
+		transaction.setUser(user);
+		
+		Transaction saved = transactionRepository.save(transaction);
+		
+		return toResponseDTO(saved);
+	}
+	
+	public List<TransactionResponseDTO> list(User user) {
+		return transactionRepository.findByUser(user)
+				.stream()
+				.map(this::toResponseDTO)
+				.toList();
+	}
+
+	public TransactionResponseDTO findById(Long id, User user) {
+		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
+				.orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+		return toResponseDTO(transaction);
+	}
+	
+	public TransactionResponseDTO update(Long id, TransactionRequestDTO dto, User user) {
+		
+		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
+				.orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+		
+		Category category = categoryRepository.findByIdAndUser(id, user)
+				.orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+		
+		transaction.setDescription(dto.description());
+		transaction.setAmount(dto.amount());
+		transaction.setDate(dto.date());
+		transaction.setType(dto.type());
+		transaction.setCategory(category);
+		
+		Transaction updated = transactionRepository.save(transaction);
+		
+		return toResponseDTO(updated);
+		
+	}
+	
+	public void delete(Long id, User user) {
+		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
+				.orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+		transactionRepository.delete(transaction);
+	}
+	
+	private TransactionResponseDTO toResponseDTO(Transaction transaction) {
+		return new TransactionResponseDTO(
+				transaction.getId(),
+				transaction.getDescription(),
+				transaction.getAmount(),
+				transaction.getDate(),
+				transaction.getType(),
+				transaction.getCategory().getName()
+		);
+	}
+}
