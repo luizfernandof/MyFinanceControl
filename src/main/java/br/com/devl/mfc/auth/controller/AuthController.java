@@ -1,8 +1,10 @@
 package br.com.devl.mfc.auth.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +15,11 @@ import br.com.devl.mfc.auth.dto.LoginRequest;
 import br.com.devl.mfc.auth.dto.LogoutRequest;
 import br.com.devl.mfc.auth.dto.RefreshTokenRequest;
 import br.com.devl.mfc.auth.dto.RefreshTokenResponse;
+import br.com.devl.mfc.auth.dto.RegisterRequest;
 import br.com.devl.mfc.auth.entity.RefreshToken;
 import br.com.devl.mfc.auth.entity.User;
 import br.com.devl.mfc.auth.repository.UserRepository;
+import br.com.devl.mfc.auth.service.AuthService;
 import br.com.devl.mfc.auth.service.JwtService;
 import br.com.devl.mfc.auth.service.RefreshTokenService;
 
@@ -23,18 +27,39 @@ import br.com.devl.mfc.auth.service.RefreshTokenService;
 @RequestMapping("/auth")
 public class AuthController {
 
+    private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtService jwtService;
 	private final RefreshTokenService refreshTokenService;
 	private final UserRepository userRepository;
 
 	public AuthController(AuthenticationManager authenticationManager, JwtService jwtService,
-			RefreshTokenService refreshTokenService, UserRepository userRepository) {
+			RefreshTokenService refreshTokenService, UserRepository userRepository, AuthService authService, PasswordEncoder passwordEncoder) {
 		this.authenticationManager = authenticationManager;
 		this.jwtService = jwtService;
 		this.refreshTokenService = refreshTokenService;
 		this.userRepository = userRepository;
+		this.authService = authService;
+		this.passwordEncoder = passwordEncoder;
 	}
+	
+	@PostMapping("/register")
+	public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+
+	    if (userRepository.existsByEmail(request.getEmail())) {
+	        throw new RuntimeException("Email já cadastrado!");
+	    }
+
+	    User user = new User();
+	    user.setEmail(request.getEmail());
+	    user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+	    userRepository.save(user);
+
+	    return ResponseEntity.ok(HttpStatus.OK.toString());
+	}
+
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {

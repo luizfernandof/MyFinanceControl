@@ -1,0 +1,33 @@
+jwt: 
+  secret: "qR2Vv9M+u0Hn4nXjEJpZq1KXyFJ2kHq9bZrYc8uPpM0=" 
+  expiration: 600000
+  refresh-expiration: 604800000
+
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:authdb
+    username: sa
+    password: 123456
+
+  jpa:
+    database-plataform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        formatsql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  security:
+    user:
+      name: disabled
+      password: disabled
+
+server:
+  port: 8080

@@ -1,5 +1,7 @@
 package br.com.devl.mfc.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -27,6 +29,8 @@ public class TransactionService {
 		
 		Category category = categoryRepository.findByIdAndUser(dto.categoryId(), user)
 				.orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+		
+		validateTransaction(dto, category);
 		
 		Transaction transaction = new Transaction();
 		transaction.setDescription(dto.description());
@@ -62,6 +66,8 @@ public class TransactionService {
 		Category category = categoryRepository.findByIdAndUser(id, user)
 				.orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 		
+		validateTransaction(dto, category);
+		
 		transaction.setDescription(dto.description());
 		transaction.setAmount(dto.amount());
 		transaction.setDate(dto.date());
@@ -89,5 +95,26 @@ public class TransactionService {
 				transaction.getType(),
 				transaction.getCategory().getName()
 		);
+	}
+	
+	private void validateTransaction(TransactionRequestDTO dto, Category category) {
+		if(!category.getType().name().equals(dto.type().name())) {
+			throw new RuntimeException(
+					"O tipo da transação deve ser igual ao tipo da categoria!"
+			);
+		}
+		
+		if(dto.amount() == null || dto.amount().compareTo(BigDecimal.ZERO) <= 0) {
+			throw new RuntimeException(
+					"O valor deve ser maior que zero(0)!"
+			);
+		}
+		
+		if(dto.date() == null || dto.date().isAfter(LocalDate.now())) {
+			throw new RuntimeException(
+					"Data inválida!"
+			);
+		}
+		
 	}
 }
