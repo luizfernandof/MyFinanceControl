@@ -11,6 +11,7 @@ import br.com.devl.mfc.dto.TransactionRequestDTO;
 import br.com.devl.mfc.dto.TransactionResponseDTO;
 import br.com.devl.mfc.entity.Category;
 import br.com.devl.mfc.entity.Transaction;
+import br.com.devl.mfc.exception.BusinessException;
 import br.com.devl.mfc.repository.CategoryRepository;
 import br.com.devl.mfc.repository.TransactionRepository;
 
@@ -28,7 +29,7 @@ public class TransactionService {
 	public TransactionResponseDTO create(TransactionRequestDTO dto, User user) {
 		
 		Category category = categoryRepository.findByIdAndUser(dto.categoryId(), user)
-				.orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+				.orElseThrow(() -> new BusinessException("Categoria não encontrada"));
 		
 		validateTransaction(dto, category);
 		
@@ -54,17 +55,17 @@ public class TransactionService {
 
 	public TransactionResponseDTO findById(Long id, User user) {
 		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
-				.orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+				.orElseThrow(() -> new BusinessException("Transação não encontrada"));
 		return toResponseDTO(transaction);
 	}
 	
 	public TransactionResponseDTO update(Long id, TransactionRequestDTO dto, User user) {
 		
 		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
-				.orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+				.orElseThrow(() -> new BusinessException("Transação não encontrada"));
 		
 		Category category = categoryRepository.findByIdAndUser(id, user)
-				.orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+				.orElseThrow(() -> new BusinessException("Categoria não encontrada"));
 		
 		validateTransaction(dto, category);
 		
@@ -82,7 +83,7 @@ public class TransactionService {
 	
 	public void delete(Long id, User user) {
 		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
-				.orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+				.orElseThrow(() -> new BusinessException("Transação não encontrada"));
 		transactionRepository.delete(transaction);
 	}
 	
@@ -99,19 +100,19 @@ public class TransactionService {
 	
 	private void validateTransaction(TransactionRequestDTO dto, Category category) {
 		if(!category.getType().name().equals(dto.type().name())) {
-			throw new RuntimeException(
+			throw new BusinessException(
 					"O tipo da transação deve ser igual ao tipo da categoria!"
 			);
 		}
 		
 		if(dto.amount() == null || dto.amount().compareTo(BigDecimal.ZERO) <= 0) {
-			throw new RuntimeException(
+			throw new BusinessException(
 					"O valor deve ser maior que zero(0)!"
 			);
 		}
 		
 		if(dto.date() == null || dto.date().isAfter(LocalDate.now())) {
-			throw new RuntimeException(
+			throw new BusinessException(
 					"Data inválida!"
 			);
 		}

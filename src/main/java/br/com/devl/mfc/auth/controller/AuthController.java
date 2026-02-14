@@ -1,6 +1,7 @@
 package br.com.devl.mfc.auth.controller;
 
-import org.springframework.http.HttpStatus;
+import java.net.URI;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import br.com.devl.mfc.auth.dto.AuthResponse;
 import br.com.devl.mfc.auth.dto.LoginRequest;
@@ -22,13 +24,15 @@ import br.com.devl.mfc.auth.repository.UserRepository;
 import br.com.devl.mfc.auth.service.AuthService;
 import br.com.devl.mfc.auth.service.JwtService;
 import br.com.devl.mfc.auth.service.RefreshTokenService;
+import br.com.devl.mfc.exception.BusinessException;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     private final PasswordEncoder passwordEncoder;
-    private final AuthService authService;
+    @SuppressWarnings("unused")
+	private final AuthService authService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtService jwtService;
 	private final RefreshTokenService refreshTokenService;
@@ -45,19 +49,21 @@ public class AuthController {
 	}
 	
 	@PostMapping("/register")
-	public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+	public ResponseEntity<Void> register(@RequestBody RegisterRequest request) {
 
 	    if (userRepository.existsByEmail(request.getEmail())) {
-	        throw new RuntimeException("Email já cadastrado!");
+	        throw new BusinessException("Este email ja foi cadastrado!");
 	    }
 
 	    User user = new User();
 	    user.setEmail(request.getEmail());
 	    user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-	    userRepository.save(user);
+	    // Montando resposta nas boas práticas REST
+	    User savedUser = userRepository.save(user);
+	    URI location = ServletUriComponentsBuilder.fromCurrentRequest().buildAndExpand(savedUser.getId()).toUri();
 
-	    return ResponseEntity.ok(HttpStatus.OK.toString());
+	    return ResponseEntity.created(location).build();
 	}
 
 
@@ -67,7 +73,7 @@ public class AuthController {
 				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
 		User user = userRepository.findByEmail(request.getEmail())
-				.orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+				.orElseThrow(() -> new BusinessException("Usuário não encontrado!"));
 
 		String accessToken = jwtService.generateToken(user);
 
@@ -92,7 +98,7 @@ public class AuthController {
 
 		RefreshToken refreshToken = refreshTokenService.findByToken(requestRefreshToken)
 				.map(refreshTokenService::verifyExpiration)
-				.orElseThrow(() -> new RuntimeException("Refresh Token Inválido!"));
+				.orElseThrow(() -> new BusinessException("RefreshToken inválido!"));
 
 		User user = refreshToken.getUser();
 
