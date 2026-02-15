@@ -25,9 +25,12 @@ import br.com.devl.mfc.auth.service.AuthService;
 import br.com.devl.mfc.auth.service.JwtService;
 import br.com.devl.mfc.auth.service.RefreshTokenService;
 import br.com.devl.mfc.exception.BusinessException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Autenticação", description = "Endpoints referentes a autenticação")
 public class AuthController {
 
     private final PasswordEncoder passwordEncoder;
@@ -66,7 +69,7 @@ public class AuthController {
 	    return ResponseEntity.created(location).build();
 	}
 
-
+	@Operation(summary = "Realiza autenticação do usuário", description = "Retorna um JWT de accessToken e um refreshToken")
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
 		authenticationManager

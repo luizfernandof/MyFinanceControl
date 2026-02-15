@@ -27,30 +27,40 @@ public class SecurityConfig {
 		this.securityExceptionHandler = securityExceptionHandler;
 	}
 
-    @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		
-		http
-			.cors(Customizer.withDefaults())
-			.csrf(csrf -> csrf.disable())
-			.sessionManagement(
-					session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-			)
-			.exceptionHandling(ex -> ex
-					.authenticationEntryPoint(securityExceptionHandler)
-			)
-			.authorizeHttpRequests(auth -> auth
-					.requestMatchers("/auth/**", "/h2-console/**").permitAll()
-					.anyRequest().authenticated()
-			)
-			//RENDER H2 ON BROWSER(NO BLOCKS)
-			.headers(headers -> 
-				headers.frameOptions(frame -> frame.disable())
-			)
-			.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-		
-		return http.build();
-		
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	    
+	    http
+	        .cors(Customizer.withDefaults())
+	        .csrf(csrf -> csrf.disable())
+	        .sessionManagement(
+	                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+	        )
+	        .exceptionHandling(ex -> ex
+	                .authenticationEntryPoint(securityExceptionHandler)
+	        )
+	        .authorizeHttpRequests(auth -> auth
+	                // Liberando as rotas de autenticação e H2
+	                .requestMatchers("/auth/**", "/h2-console/**").permitAll()
+	                
+	                // LIBERAÇÃO COMPLETA DO SWAGGER (Caminhos Críticos)
+	                .requestMatchers(
+	                    "/v3/api-docs/**",          // JSON de definição
+	                    "/v3/api-docs.yaml",        // YAML de definição
+	                    "/swagger-ui/**",           // Recursos da interface (JS/CSS)
+	                    "/swagger-ui.html",         // Página principal
+	                    "/swagger-resources/**",    // Recursos extras
+	                    "/webjars/**"               // Bibliotecas web
+	                ).permitAll()
+	                
+	                .anyRequest().authenticated()
+	        )
+	        .headers(headers -> 
+	            headers.frameOptions(frame -> frame.disable())
+	        )
+	        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+	    
+	    return http.build();
 	}
     
     @Bean

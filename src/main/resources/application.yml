@@ -27,7 +27,12 @@ spring:
   security:
     user:
       name: disabled
-      password: disabled
+      password: disabled	
+  
+  logging:
+    level:
+      org.springdoc: DEBUG
+      org.springframework.web: DEBUG
 
 server:
   port: 8080
