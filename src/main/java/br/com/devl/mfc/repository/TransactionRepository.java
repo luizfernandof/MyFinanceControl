@@ -28,28 +28,31 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 			SELECT SUM(t.amount)
 			FROM Transaction t
 			WHERE t.type = 'INCOME'
+			AND t.user = :user
 			AND MONTH(t.date) = :month
 			AND YEAR(t.date) = :year
 			""")
-	BigDecimal sumIncomeByMonth(int month, int year);
+	BigDecimal sumIncomeByMonth(User user, int month, int year);
 
 	@Query("""
 			SELECT SUM(t.amount)
 			FROM Transaction t
 			WHERE t.type = 'EXPENSE'
+			AND t.user = :user
 			AND MONTH(t.date) = :month
 			AND YEAR(t.date) = :year
 			""")
-	BigDecimal sumExpenseByMonth(int month, int year);
+	BigDecimal sumExpenseByMonth(User user, int month, int year);
 
 	@Query("""
-			    SELECT t.category.name, SUM(t.amount)
-			    FROM Transaction t
-			    WHERE t.type = 'EXPENSE'
-			    AND MONTH(t.date) = :month
-			    AND YEAR(t.date) = :year
-			    GROUP BY t.category.name
+			SELECT t.category.name, SUM(t.amount)
+			FROM Transaction t
+			WHERE t.type = 'EXPENSE'
+			AND t.user = :user
+			AND MONTH(t.date) = :month
+			AND YEAR(t.date) = :year
+			GROUP BY t.category.name
 			""")
-	List<Object[]> sumExpensesByCategory(int month, int year);
+	List<Object[]> sumExpensesByCategory(User user, int month, int year);
 
 }
