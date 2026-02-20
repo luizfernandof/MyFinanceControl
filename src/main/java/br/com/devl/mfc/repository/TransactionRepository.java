@@ -5,13 +5,26 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import br.com.devl.mfc.auth.entity.User;
 import br.com.devl.mfc.entity.Transaction;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+
+	// Refatorado: Adicionada Query para extrair mês e ano da data na paginação
+	@Query("""
+			SELECT t FROM Transaction t
+			WHERE t.user = :user
+			AND MONTH(t.date) = :month
+			AND YEAR(t.date) = :year
+			""")
+	Page<Transaction> findByUserAndMonthAndYear(@Param("user") User user, @Param("month") int month,
+			@Param("year") int year, Pageable pageable);
 
 	List<Transaction> findByUser(User user);
 
@@ -22,7 +35,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 			WHERE t.user = :user
 			AND t.date BETWEEN :start AND :end
 			""")
-	List<Transaction> findByUserAndDateBetween(User user, LocalDate start, LocalDate end);
+	List<Transaction> findByUserAndDateBetween(@Param("user") User user, @Param("start") LocalDate start,
+			@Param("end") LocalDate end);
 
 	@Query("""
 			SELECT SUM(t.amount)
@@ -32,7 +46,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 			AND MONTH(t.date) = :month
 			AND YEAR(t.date) = :year
 			""")
-	BigDecimal sumIncomeByMonth(User user, int month, int year);
+	BigDecimal sumIncomeByMonth(@Param("user") User user, @Param("month") int month, @Param("year") int year);
 
 	@Query("""
 			SELECT SUM(t.amount)
@@ -42,7 +56,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 			AND MONTH(t.date) = :month
 			AND YEAR(t.date) = :year
 			""")
-	BigDecimal sumExpenseByMonth(User user, int month, int year);
+	BigDecimal sumExpenseByMonth(@Param("user") User user, @Param("month") int month, @Param("year") int year);
 
 	@Query("""
 			SELECT t.category.name, SUM(t.amount)
@@ -53,6 +67,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 			AND YEAR(t.date) = :year
 			GROUP BY t.category.name
 			""")
-	List<Object[]> sumExpensesByCategory(User user, int month, int year);
+	List<Object[]> sumExpensesByCategory(@Param("user") User user, @Param("month") int month, @Param("year") int year);
 
 }
