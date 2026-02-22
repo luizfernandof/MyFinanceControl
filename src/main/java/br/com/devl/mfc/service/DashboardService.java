@@ -23,6 +23,10 @@ public class DashboardService {
 		this.userRepository = userRepository;
 	}
 
+	private User getAuthenticatedUser() {
+		return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	}
+
 	public DashboardSummaryDTO getSummary(int month, int year) {
 		// 1. Pegar o usuário logado (Supondo que você use Spring Security)
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -41,7 +45,14 @@ public class DashboardService {
 		List<CategoryExpenseDTO> byCategory = (result == null) ? List.of()
 				: result.stream().map(obj -> new CategoryExpenseDTO((String) obj[0],
 						(BigDecimal) (obj[1] != null ? obj[1] : BigDecimal.ZERO))).toList();
-
 		return new DashboardSummaryDTO(income, expense, balance, byCategory);
+
+	}
+
+	public List<CategoryExpenseDTO> getExpensesByCategory(int month, int year) {
+		User user = getAuthenticatedUser();
+		List<Object[]> results = repository.sumExpensesByCategory(user, month, year);
+		return results.stream().map(result -> new CategoryExpenseDTO((String) result[0], (BigDecimal) result[1]))
+				.toList();
 	}
 }

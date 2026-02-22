@@ -11,5 +11,6 @@ public record TransactionResponseDTO(
 		BigDecimal amount,
 		LocalDate date,
 		TransactionType type,
-		String categoryName
+		String categoryName,
+		String groupId
 ) {}

@@ -9,7 +9,9 @@ public record TransactionRequestDTO(
 	    String description,
 	    BigDecimal amount,
 	    LocalDate date,
-	    TransactionType type,
 	    Long categoryId,
-	    Integer installments
+	    TransactionType type, // Deve ser o Enum (EXPENSE/INCOME)
+	    Integer installments,
+	    boolean recurring,
+	    Integer occurrences
 	) {}

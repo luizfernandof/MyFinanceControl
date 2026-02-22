@@ -8,15 +8,16 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.devl.mfc.auth.entity.User;
 import br.com.devl.mfc.entity.Transaction;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-	// Refatorado: Adicionada Query para extrair mês e ano da data na paginação
 	@Query("""
 			SELECT t FROM Transaction t
 			WHERE t.user = :user
@@ -29,6 +30,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 	List<Transaction> findByUser(User user);
 
 	Optional<Transaction> findByIdAndUser(Long id, User user);
+
+	/**
+	 * Deleta todas as transações de um usuário que pertencem ao mesmo grupo
+	 * (parcelamento).
+	 */
+	@Modifying
+	@Transactional
+	@Query("DELETE FROM Transaction t WHERE t.groupId = :groupId AND t.user = :user")
+	void deleteByGroupIdAndUser(@Param("groupId") String groupId, @Param("user") User user);
 
 	@Query("""
 			SELECT t from Transaction t

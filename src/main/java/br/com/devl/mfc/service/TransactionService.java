@@ -2,6 +2,7 @@ package br.com.devl.mfc.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,30 +36,44 @@ public class TransactionService {
 
 		validateTransaction(dto, category);
 
-		int totalInstallments = (dto.installments() != null && dto.installments() > 1) ? dto.installments() : 1;
+		// Determina o número de iterações (parcelas ou ocorrências recorrentes)
+		int iterations = 1;
+		if (dto.installments() != null && dto.installments() > 1) {
+			iterations = dto.installments();
+		} else if (dto.recurring() && dto.occurrences() != null && dto.occurrences() > 1) {
+			iterations = dto.occurrences();
+		}
 
-		// CÁLCULO DA PARCELA: Divide o valor total pela quantidade de parcelas
-		BigDecimal installmentAmount = dto.amount().divide(BigDecimal.valueOf(totalInstallments), 2,
-				RoundingMode.HALF_UP);
+		// Gera um ID único para o grupo se houver repetição
+		String groupId = iterations > 1 ? UUID.randomUUID().toString() : null;
+
+		// CÁLCULO DO VALOR:
+		// Se for parcelamento, divide o total. Se for recorrência (mensalidade), mantém
+		// o valor cheio.
+		BigDecimal valuePerEntry = (dto.installments() != null && dto.installments() > 1)
+				? dto.amount().divide(BigDecimal.valueOf(iterations), 2, RoundingMode.HALF_UP)
+				: dto.amount();
 
 		Transaction firstSaved = null;
 
-		for (int i = 0; i < totalInstallments; i++) {
+		for (int i = 0; i < iterations; i++) {
 			Transaction transaction = new Transaction();
 
-			String description = totalInstallments > 1
-					? dto.description() + " (" + (i + 1) + "/" + totalInstallments + ")"
-					: dto.description();
+			// Define a descrição com sufixo apropriado
+			String suffix = "";
+			if (dto.installments() != null && dto.installments() > 1) {
+				suffix = " (" + (i + 1) + "/" + iterations + ")";
+			} else if (dto.recurring()) {
+				suffix = " [Recorrente]";
+			}
 
-			transaction.setDescription(description);
-
-			// SALVA O VALOR FRACIONADO
-			transaction.setAmount(installmentAmount);
-
+			transaction.setDescription(dto.description() + suffix);
+			transaction.setAmount(valuePerEntry);
 			transaction.setDate(dto.date().plusMonths(i));
 			transaction.setType(dto.type());
 			transaction.setCategory(category);
 			transaction.setUser(user);
+			transaction.setGroupId(groupId);
 
 			Transaction saved = transactionRepository.save(transaction);
 
@@ -70,9 +85,6 @@ public class TransactionService {
 		return toResponseDTO(firstSaved);
 	}
 
-	/**
-	 * Lista transações paginadas filtrando por usuário, mês e ano.
-	 */
 	public Page<TransactionResponseDTO> list(User user, int month, int year, Pageable pageable) {
 		return transactionRepository.findByUserAndMonthAndYear(user, month, year, pageable).map(this::toResponseDTO);
 	}
@@ -83,8 +95,8 @@ public class TransactionService {
 		return toResponseDTO(transaction);
 	}
 
+	@Transactional
 	public TransactionResponseDTO update(Long id, TransactionRequestDTO dto, User user) {
-
 		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
 				.orElseThrow(() -> new BusinessException("Transação não encontrada"));
 
@@ -104,19 +116,27 @@ public class TransactionService {
 		return toResponseDTO(updated);
 	}
 
+	@Transactional
 	public void delete(Long id, User user) {
 		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
 				.orElseThrow(() -> new BusinessException("Transação não encontrada"));
-		transactionRepository.delete(transaction);
+
+		// Exclui todo o grupo (parcelas ou recorrências) se existir um groupId
+		if (transaction.getGroupId() != null) {
+			transactionRepository.deleteByGroupIdAndUser(transaction.getGroupId(), user);
+		} else {
+			transactionRepository.delete(transaction);
+		}
 	}
 
 	private TransactionResponseDTO toResponseDTO(Transaction transaction) {
 		return new TransactionResponseDTO(transaction.getId(), transaction.getDescription(), transaction.getAmount(),
-				transaction.getDate(), transaction.getType(), transaction.getCategory().getName());
+				transaction.getDate(), transaction.getType(), transaction.getCategory().getName(),
+				transaction.getGroupId());
 	}
 
 	private void validateTransaction(TransactionRequestDTO dto, Category category) {
-		if (!category.getType().name().equals(dto.type().name())) {
+		if (!category.getType().toString().equals(dto.type().toString())) {
 			throw new BusinessException("O tipo da transação deve ser igual ao tipo da categoria!");
 		}
 
