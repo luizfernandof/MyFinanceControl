@@ -40,12 +40,6 @@ public class TransactionController {
 		return ResponseEntity.ok(transactionService.create(dto, user));
 	}
 
-	/**
-	 * Endpoint de listagem paginada e filtrada por mês/ano.
-	 * 
-	 * @PageableDefault define o padrão caso o front não envie (10 itens, ordenados
-	 *                  por data decrescente).
-	 */
 	@GetMapping
 	public ResponseEntity<Page<TransactionResponseDTO>> list(@RequestParam int month, @RequestParam int year,
 			@PageableDefault(size = 10, sort = "date") Pageable pageable) {
@@ -72,4 +66,12 @@ public class TransactionController {
 		transactionService.delete(id, user);
 		return ResponseEntity.noContent().build();
 	}
+
+	@DeleteMapping("/{id}/recurrent-forward")
+	public ResponseEntity<Void> deleteFromDateForward(@PathVariable Long id) {
+		User user = getAuthenticatedUser();
+		transactionService.deleteRecurrentForward(id, user);
+		return ResponseEntity.noContent().build();
+	}
+
 }

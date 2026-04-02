@@ -8,6 +8,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class OpenApiConfig {
@@ -17,6 +18,8 @@ public class OpenApiConfig {
             .info(new Info()
                 .title("API MFC")
                 .version("1.0"))
+                .addServersItem(new Server().url("https://api.mfc.devl.com.br").description("Servidor Seguro"))
+                .addServersItem(new Server().url("http://api.mfc.devl.com.br").description("Servidor Local"))
             .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
             .components(new Components()
                 .addSecuritySchemes("bearerAuth",
