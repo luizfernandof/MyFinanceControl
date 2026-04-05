@@ -1,37 +1,37 @@
-jwt: 
-  secret: "qR2Vv9M+u0Hn4nXjEJpZq1KXyFJ2kHq9bZrYc8uPpM0=" 
-  expiration: 600000
-  refresh-expiration: 604800000
+jwt:
+  secret: ${JWT_SECRET:qR2Vv9M+u0Hn4nXjEJpZq1KXyFJ2kHq9bZrYc8uPpM0=}
+  expiration: ${JWT_EXPIRATION:600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/mfc_db
-    username: postgres
-    password: 54168275
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/mfc_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:54168275}
 
   jpa:
-    database-plataform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        formatsql: true
+        format_sql: true
 
   h2:
     console:
-      enabled: true
+      enabled: ${H2_CONSOLE_ENABLED:true}
       path: /h2-console
 
   security:
     user:
       name: disabled
-      password: disabled	
-  
+      password: disabled
+
   logging:
     level:
       org.springdoc: DEBUG
       org.springframework.web: DEBUG
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}

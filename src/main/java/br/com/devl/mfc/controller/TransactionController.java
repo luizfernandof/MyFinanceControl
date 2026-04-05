@@ -66,12 +66,4 @@ public class TransactionController {
 		transactionService.delete(id, user);
 		return ResponseEntity.noContent().build();
 	}
-
-	@DeleteMapping("/{id}/recurrent-forward")
-	public ResponseEntity<Void> deleteFromDateForward(@PathVariable Long id) {
-		User user = getAuthenticatedUser();
-		transactionService.deleteRecurrentForward(id, user);
-		return ResponseEntity.noContent().build();
-	}
-
 }
