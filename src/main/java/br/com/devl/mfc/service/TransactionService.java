@@ -129,6 +129,18 @@ public class TransactionService {
 		}
 	}
 
+	@Transactional
+	public void deleteRecurrentForward(Long id, User user) {
+		Transaction transaction = transactionRepository.findByIdAndUser(id, user)
+				.orElseThrow(() -> new BusinessException("Transação não encontrada"));
+
+		if (transaction.getGroupId() == null) {
+			throw new BusinessException("Transação não pertence a um grupo recorrente");
+		}
+
+		transactionRepository.deleteRecurrentFromGroupOnwards(transaction.getGroupId(), user, transaction.getDate());
+	}
+
 	private TransactionResponseDTO toResponseDTO(Transaction transaction) {
 		return new TransactionResponseDTO(transaction.getId(), transaction.getDescription(), transaction.getAmount(),
 				transaction.getDate(), transaction.getType(), transaction.getCategory().getName(),

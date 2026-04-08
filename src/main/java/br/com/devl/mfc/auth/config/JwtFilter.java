@@ -11,6 +11,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import br.com.devl.mfc.auth.entity.User;
 import br.com.devl.mfc.auth.repository.UserRepository;
 import br.com.devl.mfc.auth.service.JwtService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,9 +32,9 @@ public class JwtFilter extends OncePerRequestFilter {
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = request.getRequestURI();
-		return path.startsWith("/auth/") 
-		        || path.startsWith("/h2-console") 
-		        || path.startsWith("/swagger-ui") 
+		return path.startsWith("/auth/")
+		        || path.startsWith("/h2-console")
+		        || path.startsWith("/swagger-ui")
 		        || path.startsWith("/v3/api-docs");
 	}
 
@@ -43,19 +45,35 @@ public class JwtFilter extends OncePerRequestFilter {
 		String authHeader = request.getHeader("Authorization");
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
 			String token = authHeader.substring(7);
 
-			String email = jwtService.getEmail(token);
-			User user = userRepository.findByEmail(email).orElse(null);
+			try {
+				String email = jwtService.getEmail(token);
+				User user = userRepository.findByEmail(email).orElse(null);
 
-			if (user != null) {
-				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
-						List.of());
-				SecurityContextHolder.getContext().setAuthentication(auth);
+				if (user != null) {
+					UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
+							List.of());
+					SecurityContextHolder.getContext().setAuthentication(auth);
+					filterChain.doFilter(request, response);
+					return;
+				}
+			} catch (ExpiredJwtException e) {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				response.setContentType("application/json");
+				response.getWriter().write("{\"error\": \"Token expirado\", \"message\": \"" + e.getMessage() + "\"}");
+				return;
+			} catch (JwtException e) {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				response.setContentType("application/json");
+				response.getWriter().write("{\"error\": \"Token inválido\", \"message\": \"" + e.getMessage() + "\"}");
+				return;
 			}
 		}
-		filterChain.doFilter(request, response);
+
+		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+		response.setContentType("application/json");
+		response.getWriter().write("{\"error\": \"Token não fornecido\"}");
 	}
 
 }

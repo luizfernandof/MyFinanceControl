@@ -18,8 +18,9 @@ public class OpenApiConfig {
             .info(new Info()
                 .title("API MFC")
                 .version("1.0"))
-                .addServersItem(new Server().url("https://api.mfc.devl.com.br").description("Servidor Seguro"))
-                .addServersItem(new Server().url("http://api.mfc.devl.com.br").description("Servidor Local"))
+                .addServersItem(new Server().url("http://localhost:8090").description("Local"))
+                .addServersItem(new Server().url("https://api.mfc.devl.com.br").description("Produção"))
+                .addServersItem(new Server().url("http://api.mfc.devl.com.br").description("Desenvolvimento"))
             .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
             .components(new Components()
                 .addSecuritySchemes("bearerAuth",
