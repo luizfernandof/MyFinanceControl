@@ -79,6 +79,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 			""")
 	List<Object[]> sumExpensesByCategory(@Param("user") User user, @Param("month") int month, @Param("year") int year);
 
+	@Query("""
+			SELECT t from Transaction t
+			WHERE t.user = :user
+			AND MONTH(t.date) = :month
+			AND YEAR(t.date) = :year
+			ORDER BY t.date ASC
+			""")
+	List<Transaction> findByUserAndMonthAndYearOrderByDate(@Param("user") User user, @Param("month") int month,
+			@Param("year") int year);
+
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Transactional
 	@Query("DELETE FROM Transaction t WHERE t.groupId = :groupId AND t.user = :user AND t.date >= :startDate")
