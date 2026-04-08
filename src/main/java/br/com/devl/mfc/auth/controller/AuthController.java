@@ -18,6 +18,7 @@ import br.com.devl.mfc.auth.dto.LogoutRequest;
 import br.com.devl.mfc.auth.dto.RefreshTokenRequest;
 import br.com.devl.mfc.auth.dto.RefreshTokenResponse;
 import br.com.devl.mfc.auth.dto.RegisterRequest;
+import br.com.devl.mfc.auth.entity.RefreshToken;
 import br.com.devl.mfc.auth.entity.User;
 import br.com.devl.mfc.auth.repository.UserRepository;
 import br.com.devl.mfc.auth.service.JwtService;
